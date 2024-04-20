@@ -1,1 +1,1 @@
-# bird-identification-twitter-bot
+Twitter bot
