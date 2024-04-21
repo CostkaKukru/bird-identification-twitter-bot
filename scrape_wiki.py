@@ -44,8 +44,8 @@ if __name__ == "__main__":
     birds_data = scrape_multiple_tables(url)
 
     # Export DataFrame to a text file without header and index
-    with open("lista_ptakow.txt", "w", encoding="utf-8") as file:
+    with open("lista_ptakow_polski.txt", "w", encoding="utf-8") as file:
         for index, row in birds_data.iterrows():
             file.write(f"{row['Polish Name']} ({row['Latin Name']})\n")
 
-    print("Data exported to lista_ptakow.txt successfully.")
+    print("Data exported to lista_ptakow_polski.txt successfully.")
