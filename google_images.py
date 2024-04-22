@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-
 # requires: selenium, chromium-driver, retry
-
 # run script: python google_images.py 10 "tiger" "folder_tiger"
 
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 import selenium.common.exceptions as sel_ex
@@ -14,7 +13,7 @@ import urllib.parse
 from retry import retry
 import argparse
 import logging
-import requests
+import requests   
 import os
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
@@ -130,7 +129,7 @@ def main(query, folder, n):
     opts = Options()
     opts.add_argument("--headless")
     # opts.add_argument("--blink-settings=imagesEnabled=false")
-    with webdriver.Chrome(ChromeDriverManager().install(), options=opts) as wd:
+    with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=opts) as wd:
         sources = google_image_search(wd, query, folder, safe=safe, n=n, opts='', out=sys.stdout)
 
 #main()
