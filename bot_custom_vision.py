@@ -12,7 +12,6 @@ import tweepy
 import tensorflow
 import PIL
 import psycopg2
-
 import numpy as np
 from database import init_db, read_mention_id_value, write_mention_id_value
 from PIL import Image
