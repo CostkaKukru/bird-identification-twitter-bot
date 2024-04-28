@@ -2,19 +2,18 @@
 
 # Twitter Bot: Responding Bot
 
-# This bot listens to the account @QuinOcellEs.
+# This bot listens to the account @JakiToPtak.
 
 import os
 import pathlib
 import requests
 import time
 import tweepy
-import tensorflow
+import tensorflow as tf
 import PIL
 import psycopg2
 import numpy as np
 from database import init_db, read_mention_id_value, write_mention_id_value
-from PIL import Image
 from read_bird_list import read_scientific_name
 import urllib.parse as urlparse
 
@@ -46,7 +45,7 @@ api = tweepy.API(auth, wait_on_rate_limit=True)
 
 class Model:
     def __init__(self, model_filepath):
-        self.graph_def = tensorflow.compat.v1.GraphDef()
+        self.graph_def = tf.compat.v1.GraphDef()
         self.graph_def.ParseFromString(model_filepath.read_bytes())
 
         input_names, self.output_names = self._get_graph_inout(self.graph_def)
@@ -58,8 +57,8 @@ class Model:
         image = PIL.Image.open(image_filepath).resize(self.input_shape)
         input_array = np.array(image, dtype=np.float32)[np.newaxis, :, :, :]
 
-        with tensorflow.compat.v1.Session() as sess:
-            tensorflow.import_graph_def(self.graph_def, name='')
+        with tf.compat.v1.Session() as sess:
+            tf.import_graph_def(self.graph_def, name='')
             out_tensors = [sess.graph.get_tensor_by_name(o + ':0') for o in self.output_names]
             outputs = sess.run(out_tensors, {self.input_name + ':0': input_array})
 

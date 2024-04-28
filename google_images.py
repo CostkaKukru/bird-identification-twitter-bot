@@ -8,10 +8,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 import selenium.common.exceptions as sel_ex
 import sys
-import time
 import urllib.parse
 from retry import retry
-import argparse
 import logging
 import requests   
 import os
