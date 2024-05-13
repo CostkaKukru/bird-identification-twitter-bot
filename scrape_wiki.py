@@ -3,6 +3,15 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 def scrape_table(table):
+    """
+    Scrape data from a single table and return a DataFrame.
+
+    Parameters:
+    table (BeautifulSoup): The BeautifulSoup object representing the table.
+
+    Returns:
+    pandas.DataFrame: A DataFrame containing the scraped data.
+    """
     # Initialize lists to store data
     polish_names = []
     latin_names = []
@@ -24,6 +33,15 @@ def scrape_table(table):
     return birds_df
 
 def scrape_multiple_tables(url):
+    """
+    Scrape data from multiple tables on a webpage and return a combined DataFrame.
+
+    Parameters:
+    url (str): The URL of the webpage containing the tables.
+
+    Returns:
+    pandas.DataFrame: A DataFrame containing the scraped data from all tables.
+    """
     data = requests.get(url).text  # send a GET request to fetch the page content
     soup = BeautifulSoup(data, "html.parser")  # parse the HTML content using BeautifulSoup
 
@@ -47,5 +65,10 @@ if __name__ == "__main__":
     with open("lista_ptakow_polski.txt", "w", encoding="utf-8") as file:
         for index, row in birds_data.iterrows():
             file.write(f"{row['Polish Name']} ({row['Latin Name']})\n")
+
+    # Export DataFrame to a CSV file
+    # birds_data.to_csv("birds.csv", index=False, encoding="utf-8")
+
+    # print("Data exported to birds.csv successfully.")
 
     print("Data exported to lista_ptakow_polski.txt successfully.")

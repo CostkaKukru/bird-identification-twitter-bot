@@ -6,10 +6,14 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import selenium.common.exceptions as sel_ex
 import sys
 import urllib.parse
 from retry import retry
+# import argparse
 import logging
 import requests   
 import os
@@ -25,23 +29,29 @@ selenium_exceptions = (sel_ex.ElementClickInterceptedException, sel_ex.ElementNo
 
 @retry(exceptions=KeyError, tries=6, delay=0.1, backoff=2, logger=retry_logger)
 def download_image(url, folder):
-	try:
-		response = requests.get(url, headers = {"User-Agent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"})
-		if not os.path.isdir("dataset/" + folder + "/"):
-			os.mkdir("dataset/" + folder + "/")
-		filename = "dataset/" + folder + "/" + url.split("/")[-1]
-		filename = filename.split(".jpg")[0] + ".jpg"
-		with open(filename, "wb") as file:
-			file.write(response.content)
-	except OSError as exc:
-		print(exc)
+    try:
+        response = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"},
+        )
+        folder_path = f"dataset/{folder}/"
+        os.makedirs(folder_path, exist_ok=True)
+        filename = f"{folder_path}{url.split('/')[-1].split('.jpg')[0]}.jpg"
+        with open(filename, "wb") as file:
+            file.write(response.content)
+    except OSError as exc:
+        print(exc)
 
 def scroll_to_end(wd):
     wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
 @retry(exceptions=KeyError, tries=6, delay=0.1, backoff=2, logger=retry_logger)
 def get_thumbnails(wd, want_more_than=0):
-    wd.execute_script("document.querySelector('{}').click();".format(css_load_more))
+    # Wait for the element to be clickable
+    element = WebDriverWait(self.driver,10).until(EC.element_to_be_clickable((By.XPATH,"//div[text()='Reject all']"))).click() 
+
+    element.click()
+
     thumbnails = wd.find_elements_by_css_selector(css_thumbnail)
     n_results = len(thumbnails)
     if n_results <= want_more_than:
@@ -87,7 +97,7 @@ def get_images(wd, start=0, n=20, folder="googleImages", out=None):
             sources1 = get_image_src(wd)
         except KeyError as e:
             pass
-            # logger.warning("main image not found")
+            logger.warning("main image not found")
         if not sources1:
             tn_src = tn.get_attribute("src")
             if not tn_src.startswith("data"):
@@ -108,13 +118,13 @@ def get_images(wd, start=0, n=20, folder="googleImages", out=None):
     return sources
 
 def google_image_search(wd, query, folder="googleImages", safe="off", n=20, opts='', out=None):
-    search_url_t = "https://www.google.com/search?safe={safe}&site=&tbm=isch&source=hp&q={q}&oq={q}&gs_l=img&tbs={opts}"
-    search_url = search_url_t.format(q=urllib.parse.quote(query), opts=urllib.parse.quote(opts), safe=safe)
+    search_url_t = "https://www.google.com/search?safe={safe}&site=&tbm=isch&source=hp&q={q}&oq={q}&gs_l=img&tbs={opts}" # search url without search query
+    search_url = search_url_t.format(q=urllib.parse.quote(query), opts=urllib.parse.quote(opts), safe=safe) # search url with search query
     wd.get(search_url)
     sources = get_images(wd, n=n, folder=folder, out=out)
     return sources
 
-def main(query, folder, n):
+def main(query, folder, n): #why using command line argument to fetch images? can you go through txt
     #parser = argparse.ArgumentParser(description='Fetch image URLs from Google Image Search.')
     #parser.add_argument('--safe', type=str, default="off", help='safe search [off|active|images]')
     #parser.add_argument('--opts', type=str, default="", help='search options, e.g. isz:lt,islt:svga,itp:photo,ic:color,ift:jpg')
@@ -126,7 +136,7 @@ def main(query, folder, n):
 
     opts = Options()
     opts.add_argument("--headless")
-    # opts.add_argument("--blink-settings=imagesEnabled=false")
+    opts.add_argument("--blink-settings=imagesEnabled=false")
     with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=opts) as wd:
         sources = google_image_search(wd, query, folder, safe=safe, n=n, opts='', out=sys.stdout)
 
