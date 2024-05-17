@@ -121,7 +121,5 @@ for search_query in keywords['Scientific name']:
     try:
         link = fetch_links_by_search(search_query, download_image)
         search_query = search_query.replace(" ", "_")
-        with open("img_src_links.csv", "a") as outfile:
-            outfile.write(f"{search_query}|{link}\n")
     except Exception as e: 
         print(e)

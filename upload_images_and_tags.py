@@ -21,20 +21,20 @@ def upload_images_and_tags():
 	# Replace with valid values
 	ENDPOINT = azure_keys["endpoint"]
 	training_key = azure_keys["training_key"]
-	# prediction_key = azure_keys["prediction_key"]
-	# prediction_resource_id = azure_keys["prediction_resource_id"]
+	prediction_key = azure_keys["prediction_key"]
+	prediction_resource_id = azure_keys["prediction_resource_id"]
 
 	# Authenticate client
 	credentials = ApiKeyCredentials(in_headers={"Training-key": training_key})
 	trainer = CustomVisionTrainingClient(ENDPOINT, credentials)
-	# prediction_credentials = ApiKeyCredentials(in_headers={"Prediction-key": prediction_key})
-	# predictor = CustomVisionPredictionClient(ENDPOINT, prediction_credentials)
+	prediction_credentials = ApiKeyCredentials(in_headers={"Prediction-key": prediction_key})
+	predictor = CustomVisionPredictionClient(ENDPOINT, prediction_credentials)
 
 	# Create or update a project
 	print("Creating project...")
 	project_name = "JakiToPtak"
-	# project = trainer.create_project(project_name)
-	project = trainer.get_project('627113ee-f5cf-49c8-a51e-0aad4b912091')
+	#project = trainer.create_project(project_name)
+	project = trainer.get_project('25e0bd4e-3712-4d8f-a343-ce01c0b65e29')
 
 	# Upload and tag images
 	dataset_dirname = "bird images"
@@ -43,19 +43,24 @@ def upload_images_and_tags():
 	fullpaths = map(lambda name: os.path.join(dataset_dirname, name), dirfiles)
 
 	for file in fullpaths:
-		class_name = file.split("/")[1]
+		bird_name = file.split("\\")[1]
 
 		# Create tag
-		class_name_tag = trainer.create_tag(project.id, class_name)
-		print(class_name_tag)
+		bird_name_tag = trainer.create_tag(project.id, bird_name)
 
-		print("Adding images for " + class_name + " ...")
+		print(f"Adding images for {bird_name} ...")
+		time.sleep(1) # Wait for tag to be created to avoid too many requests
 
-		for i, filename in enumerate(glob.glob('./dataset/' + class_name + '/*.jpg')):
+
+		for i, filename in enumerate(glob.glob('.\\bird images\\' + bird_name + '\\*.jpg')):
 			with open(filename, "rb") as image_contents:
 				image_data = image_contents.read()
 				tag_ids = []
-				tag_ids.append(class_name)
+				tag_ids.append(bird_name)
 
-				upload_result = trainer.create_images_from_data(project.id, image_data, tag_ids=[class_name_tag.id])
+				upload_result = trainer.create_images_from_data(project.id, image_data, tag_ids=[bird_name_tag.id])
 				print(upload_result)
+
+				time.sleep(1)
+
+upload_images_and_tags()
