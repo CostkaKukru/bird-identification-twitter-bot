@@ -1,7 +1,7 @@
 from azure.cognitiveservices.vision.customvision.training import CustomVisionTrainingClient
 from azure.cognitiveservices.vision.customvision.prediction import CustomVisionPredictionClient
 from msrest.authentication import ApiKeyCredentials
-import os, time, uuid, glob
+import os, time, glob
 from keys import azure_keys
 
 def upload_images_and_tags():

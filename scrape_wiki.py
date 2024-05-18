@@ -65,4 +65,3 @@ if __name__ == "__main__":
     birds_data.to_csv("birds.csv", index=False, encoding="utf-8")
 
     print("Data exported to birds.csv successfully.")
-
