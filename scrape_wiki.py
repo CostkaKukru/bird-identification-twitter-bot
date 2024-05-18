@@ -61,14 +61,8 @@ if __name__ == "__main__":
     url = "https://pl.wikipedia.org/wiki/Ptaki_Polski"
     birds_data = scrape_multiple_tables(url)
 
-    # Export DataFrame to a text file without header and index
-    with open("lista_ptakow_polski.txt", "w", encoding="utf-8") as file:
-        for index, row in birds_data.iterrows():
-            file.write(f"{row['Polish Name']} ({row['Latin Name']})\n")
-
     # Export DataFrame to a CSV file
-    # birds_data.to_csv("birds.csv", index=False, encoding="utf-8")
+    birds_data.to_csv("birds.csv", index=False, encoding="utf-8")
 
-    # print("Data exported to birds.csv successfully.")
+    print("Data exported to birds.csv successfully.")
 
-    print("Data exported to lista_ptakow_polski.txt successfully.")

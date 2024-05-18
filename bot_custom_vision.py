@@ -14,7 +14,7 @@ import PIL
 import psycopg2
 import numpy as np
 from database import init_db, read_mention_id_value, write_mention_id_value
-from read_bird_list import read_scientific_name
+from fetch_and_download_images import read_scientific_name
 import urllib.parse as urlparse
 
 url = urlparse.urlparse(os.environ['DATABASE_URL'])
@@ -42,9 +42,29 @@ auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
 api = tweepy.API(auth, wait_on_rate_limit=True)
 
-
 class Model:
+    """
+    A class representing a model for bird identification.
+
+    Attributes:
+        graph_def (tf.compat.v1.GraphDef): The graph definition of the model.
+        input_name (str): The name of the input tensor.
+        input_shape (list): The shape of the input tensor.
+        output_names (list): The names of the output tensors.
+
+    Methods:
+        predict(image_filepath): Predicts the bird species in the given image.
+
+    """
+
     def __init__(self, model_filepath):
+        """
+        Initializes the Model object.
+
+        Args:
+            model_filepath (str): The filepath of the model file.
+
+        """
         self.graph_def = tf.compat.v1.GraphDef()
         self.graph_def.ParseFromString(model_filepath.read_bytes())
 
@@ -54,6 +74,16 @@ class Model:
         self.input_shape = self._get_input_shape(self.graph_def, self.input_name)
 
     def predict(self, image_filepath):
+        """
+        Predicts the bird species in the given image.
+
+        Args:
+            image_filepath (str): The filepath of the image file.
+
+        Returns:
+            dict: A dictionary containing the predicted bird species.
+
+        """
         image = PIL.Image.open(image_filepath).resize(self.input_shape)
         input_array = np.array(image, dtype=np.float32)[np.newaxis, :, :, :]
 
@@ -66,6 +96,16 @@ class Model:
 
     @staticmethod
     def _get_graph_inout(graph_def):
+        """
+        Gets the input and output names of the graph.
+
+        Args:
+            graph_def (tf.compat.v1.GraphDef): The graph definition.
+
+        Returns:
+            tuple: A tuple containing the input names and output names.
+
+        """
         input_names = []
         inputs_set = set()
         outputs_set = set()
@@ -83,12 +123,33 @@ class Model:
 
     @staticmethod
     def _get_input_shape(graph_def, input_name):
+        """
+        Gets the shape of the input tensor.
+
+        Args:
+            graph_def (tf.compat.v1.GraphDef): The graph definition.
+            input_name (str): The name of the input tensor.
+
+        Returns:
+            list: A list containing the dimensions of the input tensor.
+
+        """
         for node in graph_def.node:
             if node.name == input_name:
                 return [dim.size for dim in node.attr['shape'].shape.dim][1:3]
 
 
 def print_outputs(outputs):
+    """
+    Prints the bird species identification results based on the given outputs.
+
+    Args:
+        outputs (dict): A dictionary containing the output scores for each bird species.
+
+    Returns:
+        str: A string representing the identified bird species and its scientific name.
+
+    """
     outputs = list(outputs.values())[0]
 
     labels = []
@@ -99,7 +160,6 @@ def print_outputs(outputs):
     highest_score = np.max(outputs[0])
     first_class = labels[np.argmax(outputs[0])]
     first_class_scientific_name = read_scientific_name(first_class)
-    #print(f"Specie {first_class} ({first_class_scientific_name}) with score of {highest_score}")
 
     second_highest = 0
     second_position = -1
@@ -110,7 +170,6 @@ def print_outputs(outputs):
 
     second_class = labels[second_position]
     second_class_scientific_name = read_scientific_name(second_class)
-    #print(f"Specie {second_class} ({second_class_scientific_name}) with score of {second_highest}")
 
     third_highest = 0
     third_position = -1
@@ -121,14 +180,13 @@ def print_outputs(outputs):
 
     third_class = labels[third_position]
     third_class_scientific_name = read_scientific_name(third_class)
-    #print(f"Specie {third_class} ({third_class_scientific_name}) with score of {third_highest}")
 
     if highest_score > 0.5:
         return "{} ({}).".format(first_class, first_class_scientific_name)
     elif highest_score > 0.2:
-        return "Podria ser {} ({}) ?".format(first_class, first_class_scientific_name)
+        return "Czy to może {} ({}) ?".format(first_class, first_class_scientific_name)
     else:
-        return "No el puc identificar bé."
+        return "Nie mogę go poprawnie zidentyfikować."
 
 def process_image(filename):
     print("Processing image " + filename)
@@ -147,6 +205,20 @@ def download_image(url):
     return filename
 
 def check_mentions(api, mentions_since_id):
+    """
+    Check mentions in the Twitter timeline and process the images attached to the tweets.
+
+    Args:
+        api (tweepy.API): The Tweepy API object used for making API requests.
+        mentions_since_id (int): The ID of the last mention processed.
+
+    Returns:
+        int: The ID of the latest mention processed.
+
+    Raises:
+        Exception: If there is an error while processing the images.
+
+    """
     new_mentions_since_id = mentions_since_id
     for tweet in tweepy.Cursor(api.mentions_timeline, since_id=mentions_since_id).items():
         new_mentions_since_id = max(tweet.id, new_mentions_since_id)

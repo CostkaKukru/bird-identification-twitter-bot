@@ -48,10 +48,14 @@ def fetch_links_by_search(search_query, downloader):
     options.add_argument('--headless')
     options.add_argument(f'user-agent={user_agent}')         
     options.add_argument('start-maximized')
+    options.add_argument("disable-infobars"); 
+    options.add_argument("--disable-extensions"); 
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-gpu')
+    options.add_argument("--disable-dev-shm-usage"); 
     options.add_argument('--allow-cross-origin-auth-prompt')
     options.add_argument('window-size=1200x600') 
+    options.add_argument("--disable-blink-features=AutomationControlled")
 
     driver = webdriver.Chrome(options=options) # Initialize Chrome WebDriver with options
     # Navigate to Google Images
@@ -111,10 +115,13 @@ def fetch_links_by_search(search_query, downloader):
         except:
             print("Couldn't download an image %s, continuing downloading the next one"%(i))
 
-    
-# Creating header for file containing image source link 
-with open("img_src_links.csv", "w") as outfile:
-    outfile.write("search_terms|src_link\n")
+def read_scientific_name(name):
+    with open('birds.csv', 'r') as birds:
+        for bird in birds:
+            columns = bird.strip().split(',')
+            if columns[0] == name: # Check if the name matches polish name
+                return columns[2] # return scientific name
+    return None
 
 # Loops through the list of search input
 for search_query in keywords['Scientific name']:

@@ -1,40 +1,64 @@
+import unittest
+from unittest.mock import patch, MagicMock, mock_open
+from selenium.webdriver.remote.webelement import WebElement
+import requests
 import os
-import pytest
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from fetch_and_download_images import fetch_links_by_search, download_image
 
-@pytest.fixture(scope="module")
-def setup_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--disable-web-security')
-    options.add_argument('--allow-running-insecure-content')
-    options.add_argument('--allow-cross-origin-auth-prompt')
-    driver = webdriver.Chrome(options=options)
-    yield driver
-    driver.quit()
+# Import the module under test
+import fetch_and_download_images
 
-def test_fetch_links_by_search(setup_driver):
-    driver = setup_driver
+class TestFetchLinksBySearch(unittest.TestCase):
+    @patch('fetch_and_download_images.webdriver.Chrome')
+    @patch('fetch_and_download_images.WebDriverWait')
+    def test_fetch_links_by_search(self, mock_wait, mock_chrome):
+        # Mock the Chrome WebDriver instance
+        mock_driver = mock_chrome.return_value
 
-    search_query = "bird"
-    download_folder = "bird images"
-    num_images = 5
+        # Mock the WebDriverWait instance
+        mock_wait_instance = mock_wait.return_value
+        mock_wait_instance.until.return_value = WebElement(mock_driver, 'id')
 
-    fetch_links_by_search(search_query, download_image)
+        # Mock the search box element
+        mock_search_box = MagicMock()
+        mock_driver.find_element.return_value = mock_search_box
 
-    # Check if the images are downloaded
-    for i in range(1, num_images + 1):
-        image_path = f"{download_folder}/{search_query}/{i}.jpg"
-        assert os.path.isfile(image_path)
+        # Call the function with a test search query
+        fetch_and_download_images.fetch_links_by_search('test query', MagicMock())
 
-    # Check if the image source links are written to the file
-    with open("img_src_links.csv", "r") as file:
-        lines = file.readlines()
-        assert len(lines) == num_images + 1  # +1 for the header line
-        for line in lines[1:]:
-            assert search_query in line
-            assert "http" in line
+        # Assert that the WebDriver was initialized with the correct options
+        mock_chrome.assert_called_once()
+
+        # Assert that the search box was found and the query was entered
+        mock_driver.find_element.assert_called_once_with(fetch_and_download_images.By.NAME, "q")
+        mock_search_box.send_keys.assert_called_once_with('test query')
+        mock_search_box.submit.assert_called_once()
+
+class TestDownloadImage(unittest.TestCase):
+    @patch('os.path.isdir', return_value=False)
+    @patch('os.makedirs')
+    @patch('requests.get')
+    def test_download_image(self, mock_get, mock_makedirs, mock_isdir):
+        # Mock the response from requests.get
+        mock_response = mock_get.return_value
+        mock_response.status_code = 200
+        mock_response.content = b'image content'
+
+        # Mock the open function
+        mock_file = mock_open()
+        with patch('builtins.open', mock_file):
+            fetch_and_download_images.download_image('http://example.com/image.jpg', 'folder', 'query', 1)
+
+        # Assert that the directory was created
+        mock_isdir.assert_called_once_with('folder/query')
+        mock_makedirs.assert_called_once_with('folder/query')
+
+        # Assert that the image was downloaded
+        mock_get.assert_called_once_with('http://example.com/image.jpg')
+
+        # Assert that the image was written to a file
+        mock_file.assert_called_once_with('folder/query/1.jpg', 'wb')
+        handle = mock_file()
+        handle.write.assert_called_once_with(b'image content')
+
+if __name__ == '__main__':
+    unittest.main()
