@@ -109,7 +109,7 @@ The bot can be configured using the `.env` file. Here are the configuration opti
 - **bot_custom_vision.py**: Main bot script integrating Twitter API and Azure Custom Vision.
 - **database.py**: Script for database interactions (details needed).
 - **fetch_and_download_images.py**: Python Selenium script for downloading bird images from Google Images based on `birds.csv`.
-- **list_downloaded_species.py**: Script to check which species have been downloaded.
+- **list_downloaded_species.py**: Script to cross-check which species have been downloaded.
 - **Procfile**: File for declaring process types for deployment (e.g., Heroku).
 - **README.md**: This README file.
 - **requirements.txt**: List of dependencies required for the project.
