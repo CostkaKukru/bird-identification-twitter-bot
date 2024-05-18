@@ -33,7 +33,6 @@ def upload_images_and_tags():
 	# Create or update a project
 	print("Creating project...")
 	project_name = "JakiToPtak"
-	#project = trainer.create_project(project_name)
 	project = trainer.get_project('25e0bd4e-3712-4d8f-a343-ce01c0b65e29')
 
 	# Upload and tag images
